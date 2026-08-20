@@ -1,0 +1,63 @@
+# -------------------------
+# Python
+# -------------------------
+
+# Python Cache / Compiled Files
+__pycache__/
+*.py[cod]
+
+# Virtual Environments
+.venv/
+venv/
+env/
+
+# Python Testing / Tooling Caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Environment Variables / Secrets
+.env
+.env.*
+
+# -------------------------
+# Visual Studio Code
+# -------------------------
+
+.vscode/*
+
+# Keep - Useful Shared VS Code Configuration Files
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# VS Code Extension Packages
+*.vsix
+
+# -------------------------
+# macOS
+# -------------------------
+
+.DS_Store
+._*
+__MACOSX/
+
+# -------------------------
+# Windows
+# -------------------------
+
+Thumbs.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+# -------------------------
+# Linux
+# -------------------------
+
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
