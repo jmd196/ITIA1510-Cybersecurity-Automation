@@ -1,6 +1,6 @@
-# This imports the four check functions from password_checker.py so they can be tested without running the full interactive program.
-## from tells Python which file/module to import from, import brings in the named functions, and the function names must match password_checker.py exactly.
-from password_checker import check_length, check_digit, check_username, check_rotation
+# This imports the check functions and the known breach list from password_checker.py so they can be tested without running the main program.
+## from tells Python which file/module to import from, and import brings in the named functions and list.
+from password_checker import check_length, check_digit, check_username, check_rotation, check_breach, known_breached
 
 
 # This tests check_length() with a password that is too short.
@@ -55,5 +55,18 @@ assert rotation_ok == True
 print("PASS: check_rotation correctly returned True for a 6-month interval")
 
 
-# If the program reaches this line, all eight assert statements passed without an AssertionError.
-print("All 8 tests passed.")
+# This tests check_breach() with a password that appears in the known breached password list.
+## Because "password123" is in known_breached, not_breached should be False.
+not_breached = check_breach("password123", known_breached)
+assert not_breached == False
+print("PASS: check_breach correctly returned False for a known breached password")
+
+# This tests check_breach() with a password that is not in the known breached password list.
+## Because "Blue-Harbor-72-Lantern" is not in known_breached, not_breached should be True.
+not_breached = check_breach("Blue-Harbor-72-Lantern", known_breached)
+assert not_breached == True
+print("PASS: check_breach correctly returned True for a password not in the known breach list")
+
+
+# If the program reaches this line, all ten assert statements passed without an AssertionError.
+print("All 10 tests passed.")
