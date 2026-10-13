@@ -1,6 +1,10 @@
-# This imports the check functions, known breach list, and policy dictionary from password_checker.py.
+# This imports the check functions, file functions, and policy dictionary from password_checker.py.
 ## Importing them allows the functions and policy rules to be tested without running the main program.
-from password_checker import check_length, check_digit, check_username, check_rotation, check_breach, known_breached, policy
+from password_checker import (check_length, check_digit, check_username, check_rotation,
+                              check_breach, load_credentials, load_breached, write_report, policy)
+
+# The breach list is now loaded from breached.txt instead of being stored inside password_checker.py.
+known_breached = load_breached("breached.txt")
 
 
 # This tests check_length() with a password that is too short.
@@ -79,5 +83,36 @@ assert "require_digit" in policy
 print("PASS: policy contains the require_digit key")
 
 
-# If the program reaches this line, all twelve assert statements passed without an AssertionError.
-print("All 12 tests passed.")
+# This tests that load_credentials() returns a list.
+credentials = load_credentials("credentials.txt")
+assert type(credentials) == list
+print("PASS: load_credentials returned a list")
+
+# This tests that the first credential dictionary contains the required account key.
+assert "account" in credentials[0]
+print("PASS: first credential contains the account key")
+
+
+# This tests that load_breached() returns a list.
+breached_passwords = load_breached("breached.txt")
+assert type(breached_passwords) == list
+print("PASS: load_breached returned a list")
+
+# This tests that a known breached password was read from breached.txt.
+assert "password123" in breached_passwords
+print("PASS: load_breached read password123 from breached.txt")
+
+
+# This tests that write_report() writes each list item as one line in the output file.
+test_lines = ["first line", "second line"]
+write_report(test_lines, "test_report.txt")
+
+with open("test_report.txt", "r") as f:
+    test_report_text = f.read()
+
+assert test_report_text == "first line\nsecond line\n"
+print("PASS: write_report wrote the expected text")
+
+
+# If the program reaches this line, all seventeen assert statements passed without an AssertionError.
+print("All 17 tests passed.")
