@@ -1,3 +1,5 @@
+import json
+
 # This dictionary stores the password policy rules in one place instead of putting the rule values inside the functions.
 # It is outside the if __name__ == "__main__": block so the functions and the test file can both access it.
 policy = {
@@ -59,6 +61,24 @@ def write_report(report_lines, filepath):
     with open(filepath, "w") as f:
         for line in report_lines:
             f.write(line + "\n")
+
+
+def save_summary(summary, filepath):
+    """Save the summary dictionary to a JSON file."""
+
+    # Write mode replaces the old JSON file so it always contains the newest summary.
+    with open(filepath, "w") as f:
+        json.dump(summary, f, indent=2)
+
+
+def load_summary(filepath):
+    """Load and return a summary dictionary from a JSON file."""
+
+    # json.load() changes the JSON object in the file back into a Python dictionary.
+    with open(filepath, "r") as f:
+        summary = json.load(f)
+
+    return summary
 
 
 def check_length(password, policy):
@@ -332,3 +352,4 @@ if __name__ == "__main__":
         print(line)
 
     write_report(report_lines, "report.txt")
+    save_summary(summary, "audit_summary.json")

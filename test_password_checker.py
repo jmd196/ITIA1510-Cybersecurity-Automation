@@ -1,7 +1,8 @@
 # This imports the check functions, file functions, and policy dictionary from password_checker.py.
 ## Importing them allows the functions and policy rules to be tested without running the main program.
 from password_checker import (check_length, check_digit, check_username, check_rotation,
-                              check_breach, load_credentials, load_breached, write_report, policy)
+                              check_breach, load_credentials, load_breached, write_report,
+                              save_summary, load_summary, policy)
 
 # The breach list is now loaded from breached.txt instead of being stored inside password_checker.py.
 known_breached = load_breached("breached.txt")
@@ -114,5 +115,35 @@ assert test_report_text == "first line\nsecond line\n"
 print("PASS: write_report wrote the expected text")
 
 
-# If the program reaches this line, all seventeen assert statements passed without an AssertionError.
-print("All 17 tests passed.")
+# This tests that a summary saved to JSON comes back as the same dictionary.
+sample = {"total": 2, "passed": 1, "failed": 1, "critical": 1,
+          "failed_accounts": ["Gmail"], "critical_accounts": ["Gmail"]}
+
+save_summary(sample, "test_summary.json")
+loaded_summary = load_summary("test_summary.json")
+
+assert loaded_summary == sample
+print("PASS: save_summary and load_summary gave back the same dictionary")
+
+
+# This tests that failed_accounts is still a list after the JSON file is loaded.
+assert type(loaded_summary["failed_accounts"]) == list
+print("PASS: failed_accounts came back as a list")
+
+
+# This tests that passwords from credentials.txt do not appear in the saved JSON file.
+with open("test_summary.json", "r") as f:
+    saved_summary_text = f.read()
+
+password_found = False
+
+for cred in credentials:
+    if cred["password"] in saved_summary_text:
+        password_found = True
+
+assert password_found == False
+print("PASS: saved summary does not contain passwords")
+
+
+# If the program reaches this line, all twenty assert statements passed without an AssertionError.
+print("All 20 tests passed.")
