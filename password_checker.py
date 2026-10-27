@@ -1,4 +1,6 @@
 import json
+import os
+
 
 # This dictionary stores the password policy rules in one place instead of putting the rule values inside the functions.
 # It is outside the if __name__ == "__main__": block so the functions and the test file can both access it.
@@ -8,7 +10,8 @@ policy = {
     "max_rotation_months": 12,
     "good_rotation_months": 6,
     "require_digit": True,
-    "check_breach_list": True
+    "check_breach_list": True,
+    "history_runs": 3
 }
 
 
@@ -79,6 +82,49 @@ def load_summary(filepath):
         summary = json.load(f)
 
     return summary
+
+
+def load_history(filepath):
+    """Load and return the audit history list. Returns an empty list if the file does not exist."""
+
+    # A missing history file means no audit runs have been saved yet, so an empty list lets the first run start the history.
+    if os.path.exists(filepath) == False:
+        return []
+
+    # If the file already exists, json.load() changes the saved JSON array back into a Python list.
+    with open(filepath, "r") as f:
+        history = json.load(f)
+
+    return history
+
+
+def add_to_history(history, summary, keep):
+    """Add the newest audit summary to history and keep only the newest entries."""
+
+    # The newest saved run is history[-1]. Its run number is used instead of len(history) because trimming stops the list length from growing.
+    if len(history) == 0:
+        run = 1
+    else:
+        run = history[-1]["run"] + 1
+
+    # Each history entry keeps the run number, pass/fail counts, and the list of accounts with critical findings.
+    history.append({
+        "run": run,
+        "passed": summary["passed"],
+        "failed": summary["failed"],
+        "critical_accounts": summary["critical_accounts"]
+    })
+
+    # A negative slice keeps only the newest runs so the history does not grow without limit.
+    return history[-keep:]
+
+
+def save_history(history, filepath):
+    """Save the audit history list to a JSON file."""
+
+    # indent=2 makes the saved history easier for a person to read without changing the data.
+    with open(filepath, "w") as f:
+        json.dump(history, f, indent=2)
 
 
 def check_length(password, policy):
@@ -353,3 +399,8 @@ if __name__ == "__main__":
 
     write_report(report_lines, "report.txt")
     save_summary(summary, "audit_summary.json")
+
+    # The history is loaded after the current summary is saved, then this run is added and trimmed to the policy limit.
+    history = load_history("audit_history.json")
+    history = add_to_history(history, summary, policy["history_runs"])
+    save_history(history, "audit_history.json")

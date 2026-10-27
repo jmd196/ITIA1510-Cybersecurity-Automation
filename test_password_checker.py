@@ -2,7 +2,8 @@
 ## Importing them allows the functions and policy rules to be tested without running the main program.
 from password_checker import (check_length, check_digit, check_username, check_rotation,
                               check_breach, load_credentials, load_breached, write_report,
-                              save_summary, load_summary, policy)
+                              save_summary, load_summary, load_history, add_to_history,
+                              save_history, policy)
 
 # The breach list is now loaded from breached.txt instead of being stored inside password_checker.py.
 known_breached = load_breached("breached.txt")
@@ -145,5 +146,35 @@ assert password_found == False
 print("PASS: saved summary does not contain passwords")
 
 
-# If the program reaches this line, all twenty assert statements passed without an AssertionError.
-print("All 20 tests passed.")
+# This tests that load_history() returns an empty list when the history file does not exist yet.
+history = load_history("missing_history.json")
+assert history == []
+print("PASS: load_history returned an empty list for a missing file")
+
+
+# This tests that the first history entry is given run number 1.
+history = add_to_history([], sample, 3)
+assert len(history) == 1
+assert history[0]["run"] == 1
+print("PASS: add_to_history created run 1 for an empty history")
+
+
+# This tests that the history is trimmed to the newest two runs.
+history = []
+for i in range(3):
+    history = add_to_history(history, sample, 2)
+
+assert [entry["run"] for entry in history] == [2, 3]
+print("PASS: add_to_history kept only the newest 2 runs")
+
+
+# This tests that a history saved to JSON comes back as the same list.
+save_history(history, "test_history.json")
+loaded_history = load_history("test_history.json")
+
+assert loaded_history == history
+print("PASS: save_history and load_history gave back the same history")
+
+
+# If the program reaches this line, all twenty-four tests passed without an AssertionError.
+print("All 24 tests passed.")
