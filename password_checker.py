@@ -217,6 +217,31 @@ def check_breach(password, known_breached):
     return not_breached
 
 
+def breach_verdicts(username, credentials, known_breached):
+    """Return the user's account names and whether each password is on the known breach list."""
+
+    # The result only includes the username, account names, and breach verdicts because a password should not be sent to another system or model.
+    result = {
+        "username": username,
+        "accounts": []
+    }
+
+    # Only credentials that belong to the requested username are added to the accounts list.
+    for cred in credentials:
+        if cred["username"] == username:
+            not_breached = check_breach(cred["password"], known_breached)
+
+            # on_breach_list is the opposite of check_breach() because check_breach() returns True when the password is NOT breached.
+            on_breach_list = not_breached == False
+
+            result["accounts"].append({
+                "account": cred["account"],
+                "on_breach_list": on_breach_list
+            })
+
+    return result
+
+
 def audit_password(account, username, password, rotation_interval, known_breached, policy, report_lines):
     """Audits one password and adds its report to report_lines. Returns (passed, failed, critical)."""
 
@@ -404,3 +429,13 @@ if __name__ == "__main__":
     history = load_history("audit_history.json")
     history = add_to_history(history, summary, policy["history_runs"])
     save_history(history, "audit_history.json")
+
+    # This creates the breach verdict tool result for jsmith without including any passwords.
+    breach_result = breach_verdicts("jsmith", credentials, known_breached)
+
+    # json.dumps() turns the dictionary into formatted JSON text for the console.
+    print(json.dumps(breach_result, indent=2))
+
+    # The same minimized result is saved for a harness to use without exposing the credential passwords.
+    with open("breach_check.json", "w") as f:
+        json.dump(breach_result, f, indent=2)

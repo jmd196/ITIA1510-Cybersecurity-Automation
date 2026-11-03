@@ -1,9 +1,11 @@
+import json
+
 # This imports the check functions, file functions, and policy dictionary from password_checker.py.
 ## Importing them allows the functions and policy rules to be tested without running the main program.
 from password_checker import (check_length, check_digit, check_username, check_rotation,
-                              check_breach, load_credentials, load_breached, write_report,
-                              save_summary, load_summary, load_history, add_to_history,
-                              save_history, policy)
+                              check_breach, breach_verdicts, load_credentials, load_breached,
+                              write_report, save_summary, load_summary, load_history,
+                              add_to_history, save_history, policy)
 
 # The breach list is now loaded from breached.txt instead of being stored inside password_checker.py.
 known_breached = load_breached("breached.txt")
@@ -176,5 +178,32 @@ assert loaded_history == history
 print("PASS: save_history and load_history gave back the same history")
 
 
-# If the program reaches this line, all twenty-four tests passed without an AssertionError.
-print("All 24 tests passed.")
+# This tests that jsmith's first account is Gmail and its password is on the breach list.
+result = breach_verdicts("jsmith", load_credentials("credentials.txt"), known_breached)
+assert result["accounts"][0] == {"account": "Gmail", "on_breach_list": True}
+print("PASS: breach_verdicts marked the Gmail password as on the breach list")
+
+
+# This tests that a username with no matching credentials gets an empty accounts list.
+result = breach_verdicts("nobody", load_credentials("credentials.txt"), known_breached)
+assert result["accounts"] == []
+print("PASS: breach_verdicts returned an empty accounts list for nobody")
+
+
+# This tests that credential passwords are not exposed anywhere in the JSON tool result.
+result = breach_verdicts("jsmith", load_credentials("credentials.txt"), known_breached)
+result_text = json.dumps(result)
+password_found = False
+
+for cred in credentials:
+    # The SSH Server password is the username, so it is skipped because the result correctly includes the username.
+    if cred["password"] != result["username"]:
+        if cred["password"] in result_text:
+            password_found = True
+
+assert password_found == False
+print("PASS: breach_verdicts result does not contain credential passwords")
+
+
+# If the program reaches this line, all twenty-seven tests passed without an AssertionError.
+print("All 27 tests passed.")
