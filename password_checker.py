@@ -242,6 +242,69 @@ def breach_verdicts(username, credentials, known_breached):
     return result
 
 
+
+def length_verdicts(username, credentials, known_breached):
+    """Return the user's account names and whether each password meets the strong length requirement."""
+
+    # The result has the same shape as the other verdict functions so a harness can handle each check the same way.
+    result = {
+        "username": username,
+        "accounts": []
+    }
+
+    for cred in credentials:
+        if cred["username"] == username:
+            length_ok, length_verdict = check_length(cred["password"], policy)
+
+            result["accounts"].append({
+                "account": cred["account"],
+                "long_enough": length_ok
+            })
+
+    return result
+
+
+def rotation_verdicts(username, credentials, known_breached):
+    """Return the user's account names, rotation months, and whether each rotation interval passes."""
+
+    # known_breached is included even though this check does not use it so all three verdict functions can be called the same way.
+    result = {
+        "username": username,
+        "accounts": []
+    }
+
+    for cred in credentials:
+        if cred["username"] == username:
+            rotation_ok, rotation_verdict = check_rotation(cred["rotation_interval"], policy)
+
+            result["accounts"].append({
+                "account": cred["account"],
+                "rotation_months": cred["rotation_interval"],
+                "rotation_ok": rotation_ok
+            })
+
+    return result
+
+
+# These names must match the Week 12 tool names exactly so run_check() can choose the correct check from the name it receives.
+CHECK_NAMES = ["check_breach", "check_length", "check_rotation"]
+
+
+def run_check(name, username, credentials, known_breached):
+    """Run one named verdict check for a username and return its result."""
+
+    if name == "check_breach":
+        result = breach_verdicts(username, credentials, known_breached)
+    elif name == "check_length":
+        result = length_verdicts(username, credentials, known_breached)
+    elif name == "check_rotation":
+        result = rotation_verdicts(username, credentials, known_breached)
+    else:
+        # The else branch refuses any name outside CHECK_NAMES so an unknown check never runs a different function by mistake.
+        result = {"error": "unknown check"}
+
+    return result
+
 def audit_password(account, username, password, rotation_interval, known_breached, policy, report_lines):
     """Audits one password and adds its report to report_lines. Returns (passed, failed, critical)."""
 
@@ -439,3 +502,12 @@ if __name__ == "__main__":
     # The same minimized result is saved for a harness to use without exposing the credential passwords.
     with open("breach_check.json", "w") as f:
         json.dump(breach_result, f, indent=2)
+
+    # Each key in all_checks uses the same check name that a Week 12 tool uses.
+    all_checks = {}
+    for name in CHECK_NAMES:
+        result = run_check(name, "jsmith", credentials, known_breached)
+        all_checks[name] = result
+
+    with open("all_checks.json", "w") as f:
+        json.dump(all_checks, f, indent=2)

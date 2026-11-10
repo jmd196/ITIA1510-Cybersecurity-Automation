@@ -3,9 +3,10 @@ import json
 # This imports the check functions, file functions, and policy dictionary from password_checker.py.
 ## Importing them allows the functions and policy rules to be tested without running the main program.
 from password_checker import (check_length, check_digit, check_username, check_rotation,
-                              check_breach, breach_verdicts, load_credentials, load_breached,
-                              write_report, save_summary, load_summary, load_history,
-                              add_to_history, save_history, policy)
+                              check_breach, breach_verdicts, length_verdicts, rotation_verdicts,
+                              run_check, CHECK_NAMES, load_credentials, load_breached, write_report,
+                              save_summary, load_summary, load_history, add_to_history,
+                              save_history, policy)
 
 # The breach list is now loaded from breached.txt instead of being stored inside password_checker.py.
 known_breached = load_breached("breached.txt")
@@ -205,5 +206,31 @@ assert password_found == False
 print("PASS: breach_verdicts result does not contain credential passwords")
 
 
-# If the program reaches this line, all twenty-seven tests passed without an AssertionError.
-print("All 27 tests passed.")
+# This tests that jsmith's third account, VPN, passes the strong-length check.
+result = length_verdicts("jsmith", credentials, known_breached)
+assert result["accounts"][2] == {"account": "VPN", "long_enough": True}
+print("PASS: length_verdicts marked the VPN password as long enough")
+
+
+# This tests the SSH Server rotation interval and the Boolean rotation verdict.
+result = rotation_verdicts("jsmith", credentials, known_breached)
+assert result["accounts"][1]["rotation_months"] == 24
+assert result["accounts"][1]["rotation_ok"] == False
+print("PASS: rotation_verdicts returned the SSH Server rotation result")
+
+
+# This tests that run_check() routes check_breach to the same verdict function result.
+direct_result = breach_verdicts("jsmith", credentials, known_breached)
+routed_result = run_check("check_breach", "jsmith", credentials, known_breached)
+assert routed_result == direct_result
+print("PASS: run_check routed check_breach correctly")
+
+
+# This tests that a name outside the three allowed check names is refused.
+result = run_check("reset_password", "jsmith", credentials, known_breached)
+assert result == {"error": "unknown check"}
+print("PASS: run_check refused an unknown check name")
+
+
+# If the program reaches this line, all thirty-one tests passed without an AssertionError.
+print("All 31 tests passed.")
